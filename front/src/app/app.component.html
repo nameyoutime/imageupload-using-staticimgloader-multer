@@ -1,0 +1,53 @@
+<form action method="POST" enctype="multipart/form-data" class="card" style="width: 18rem;margin-left: 40%;">
+
+  <h1 class="text-center">Form</h1>
+
+  <div class="text-center">
+    <span class="form-label">
+      <form [formGroup]="frm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <h4>Fill in the form</h4>
+          <div class="text-center">
+            <span class="form-label">
+              Title
+            </span>
+          </div>
+          <div class="text-center mb-1">
+            <input placeholder="Enter title" type="text" formControlName="title">
+          </div>
+          <div class="text-center">
+            <span class="form-label">
+              Description
+            </span>
+          </div>
+          <div class="text-center mb-1">
+            <input placeholder="Enter description" type="text" formControlName="description">
+          </div>
+          <div class="text-center">
+            <span class="form-label">
+              File
+            </span>
+          </div>
+          <div class="text-center mb-1">
+            <input type="file" name="image"  (change)="selectImage($event)" />
+          </div>
+          <button #submit type="submit" class="text-center btn btn-primary">Create</button>
+        </div>
+      </form>
+
+    </span>
+  </div>
+
+</form>
+<div style="display: flex;
+flex-wrap: wrap;
+flex-direction: row;
+justify-content: center;
+gap: 1rem;">
+
+  <div *ngFor="let item of this.data|async" style="padding: 1rem;">
+    <h5>id:{{item._id}}</h5>
+    <img width="500px" src="http://192.168.1.9:3000/img?name={{item.file}}">
+    <button class="text-center btn btn-danger" (click)="deleteItem(item._id,item.file)">Delete</button>
+  </div>
+</div>
