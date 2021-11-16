@@ -7,6 +7,8 @@ const path = require('path');
 const cors = require("cors");
 const multer = require('multer');
 const fs = require('fs');
+const config = require("./config");
+
 const app = express();
 const db = new Database();
 app.use(body.json());
@@ -15,7 +17,7 @@ app.use(cors({ origin: "*" }));
 const Img = mongoose.model("img", imgSchema);
 
 const dir = path.join(__dirname, 'public');
-
+const enpointFront = `http://${config.HOST}:${config.PORT}/img?name=`
 
 // SET STORAGE
 const storage = multer.diskStorage({
@@ -36,7 +38,7 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 })
 
-app.post('/file', upload.single('file'), (req, res, next) => {
+app.post('/file', upload.array('file'), (req, res, next) => {
   file = req.file;
   let { data } = req.body;
   let temp = JSON.parse(data.toString());
@@ -45,10 +47,37 @@ app.post('/file', upload.single('file'), (req, res, next) => {
     error.httpStatusCode = 400
     return next(error)
   }
-  temp.file = req.file.filename
+  // console.log(req.file)
+
+  // temp.file = req.file.filename
+  // const img = new Img(temp);
+  // db.createTask(img);
+  res.send({ message: `item ${img.title} was created` });
+})
+
+
+app.post('/files', upload.array('files'), (req, res, next) => {
+  const files = req.files;
+  let { data } = req.body;
+  let temp = JSON.parse(data.toString());
+  if (!files) {
+    const error = new Error('No File')
+    error.httpStatusCode = 400
+    return next(error)
+  }
+  // console.log(req.files.length)
+  temp.file = [];
+  for (let i = 0; i < files.length; i++) {
+    temp.file.push({
+      image: enpointFront + files[i].filename,
+      thumbImage: enpointFront + files[i].filename,
+      imageName: files[i].filename
+    })
+  }
+  // console.log(temp)
   const img = new Img(temp);
   db.createTask(img);
-  res.send({ message: `item ${img.title} was created` });
+  res.send({ sttus: 'ok' });
 })
 
 app.get("/imgs", async (req, res) => {
@@ -57,13 +86,17 @@ app.get("/imgs", async (req, res) => {
 });
 
 app.delete("/delete", async (req, res) => {
-  const { id, file } = req.query;
+  const { id } = req.query;
   try {
+    let result = await Img.findById(id);
+    let file = result.file;
     await Img.deleteOne({ _id: id });
-    let path = `src/public/${file}`
-    await fs.unlinkSync(path, (err) => {
-      console.log(err)
-    })
+    for (let i = 0; i < result.file.length; i++) {
+      let path = `src/public/${file[i].imageName}`
+      await fs.unlinkSync(path, (err) => {
+        console.log(err)
+      })
+    }
     res.send(
       {
         message: `deleteted ${id}`
@@ -71,7 +104,7 @@ app.delete("/delete", async (req, res) => {
     );
   } catch (e) {
     res.send({
-      message: `can't deletet ${id}`
+      message: `can't delete ${id}`
     })
   }
 });

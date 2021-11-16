@@ -2,23 +2,27 @@ import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
-
+import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  title = 'front';
+
+  public endpoint: any = environment.endpoint
   public data: any;
-  title = 'fileUpload';
   images: any;
   public frm: any;
   multipleImages = [];
   constructor(private http: HttpClient, private fb: FormBuilder) {
     this.data = this.getAll();
+    this.getAll().subscribe(data=>{
+      console.log(data);
+    })
 
   }
-
   ngOnInit() {
     this.frm = this.fb.group({
       title: new FormControl('', Validators.required),
@@ -27,9 +31,10 @@ export class AppComponent {
     })
   }
 
+
   selectImage(event: any) {
     if (event.target.files.length > 0) {
-      const file = event.target.files[0];
+      const file = event.target.files;
       this.images = file;
     }
   }
@@ -46,8 +51,11 @@ export class AppComponent {
       //more code here
       const formData = new FormData();
       formData.append("data", JSON.stringify(this.frm.value))
-      formData.append("file", this.images)
-      this.http.post<any>('http://192.168.1.9:3000/file', formData).subscribe(data => {
+      for (let img of this.images) {
+        formData.append('files', img);
+      }
+      // formData.append("file",this.images )
+      this.http.post<any>(environment.endpoint+'files', formData).subscribe(data => {
         console.log(data);
         this.data = this.getAll();
       }
@@ -58,19 +66,19 @@ export class AppComponent {
 
   }
 
-  delete(id: any,file:any): Observable<any> {
-    return this.http.delete(`http://192.168.1.9:3000/delete?id=${id}&file=${file}`);
+  delete(id: any): Observable<any> {
+    return this.http.delete(`${environment.endpoint}delete?id=${id}`);
   }
 
-  deleteItem(id: any,file:any) {
-    this.delete(id,file).subscribe(data => {
+  deleteItem(id: any) {
+    this.delete(id).subscribe(data => {
       console.log(data)
       this.data = this.getAll();
     })
 
   }
   getAll(): Observable<any> {
-    return this.http.get("http://192.168.1.9:3000/imgs");
+    return this.http.get(environment.endpoint+"imgs");
   }
 
   onMultipleSubmit() {
@@ -79,7 +87,7 @@ export class AppComponent {
       formData.append('files', img);
     }
 
-    this.http.post<any>('http://localhost:3000/multipleFiles', formData).subscribe(
+    this.http.post<any>(environment.endpoint+'files', formData).subscribe(
       (res) => console.log(res),
       (err) => console.log(err)
     );
